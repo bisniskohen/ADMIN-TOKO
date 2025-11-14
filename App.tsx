@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth } from './services/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { auth, db } from './services/firebase';
 
 import Login from './components/Login';
 import Sidebar from './components/Sidebar';
@@ -11,21 +13,33 @@ import ShopManagement from './components/ShopManagement';
 import AdminManagement from './components/AdminManagement';
 import CreatorHub from './components/CreatorHub';
 import CreatorSamples from './components/CreatorSamples';
+import AffiliateService from './components/AffiliateService';
 
 
-type View = 'dashboard' | 'data' | 'shopManagement' | 'adminManagement' | 'creatorHub' | 'creatorSamples';
+type View = 'dashboard' | 'data' | 'shopManagement' | 'adminManagement' | 'creatorHub' | 'creatorSamples' | 'affiliateService';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [pendingEventsCount, setPendingEventsCount] = useState(0);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
     });
-    return () => unsubscribe();
+
+    // Listen for pending affiliate events
+    const q = query(collection(db, "AFFILIATE_EVENTS"), where("status", "==", "scheduled"));
+    const unsubscribeEvents = onSnapshot(q, (querySnapshot) => {
+      setPendingEventsCount(querySnapshot.size);
+    });
+
+    return () => {
+      unsubscribeAuth();
+      unsubscribeEvents();
+    };
   }, []);
 
   const renderContent = useCallback(() => {
@@ -42,6 +56,8 @@ const App: React.FC = () => {
         return <CreatorHub />;
       case 'creatorSamples':
         return <CreatorSamples />;
+      case 'affiliateService':
+        return <AffiliateService />;
       default:
         return <Dashboard />;
     }
@@ -61,7 +77,11 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-light">
-      <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
+      <Sidebar 
+        currentView={currentView} 
+        setCurrentView={setCurrentView}
+        pendingEventsCount={pendingEventsCount}
+      />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header user={user} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-light p-4 md:p-8">

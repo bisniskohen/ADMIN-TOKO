@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '../services/firebase';
 import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, Timestamp, writeBatch } from 'firebase/firestore';
 import { Creator } from '../types';
@@ -32,6 +32,7 @@ const CreatorHub: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<Creator | null>(null);
     const [formData, setFormData] = useState(initialFormData);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         const q = query(collection(db, "CREATORS"), orderBy("createdAt", "desc"));
@@ -45,6 +46,15 @@ const CreatorHub: React.FC = () => {
         });
         return () => unsubscribe();
     }, []);
+
+    const filteredCreators = useMemo(() => {
+        if (!searchQuery) {
+            return creators;
+        }
+        return creators.filter(creator =>
+            creator.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [creators, searchQuery]);
     
     const openModal = (item: Creator | null = null) => {
         setCurrentItem(item);
@@ -116,12 +126,21 @@ const CreatorHub: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center gap-4">
                 <h2 className="text-3xl font-bold text-gray-800">Hubungi Kreator</h2>
-                <button onClick={() => openModal()} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent">
-                    <PlusIcon className="w-5 h-5"/>
-                    Tambah Kreator
-                </button>
+                 <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <input
+                        type="text"
+                        placeholder="Cari nama kreator..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="block w-full sm:w-64 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
+                    />
+                    <button onClick={() => openModal()} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent">
+                        <PlusIcon className="w-5 h-5"/>
+                        Tambah Kreator
+                    </button>
+                </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -137,10 +156,10 @@ const CreatorHub: React.FC = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
                                 <tr><td colSpan={6} className="text-center py-4">Memuat data...</td></tr>
-                            ) : creators.length === 0 ? (
-                                <tr><td colSpan={6} className="text-center py-4 text-gray-500">Tidak ada data kreator.</td></tr>
+                            ) : filteredCreators.length === 0 ? (
+                                <tr><td colSpan={6} className="text-center py-4 text-gray-500">{searchQuery ? 'Tidak ada kreator yang cocok dengan pencarian.' : 'Tidak ada data kreator.'}</td></tr>
                             ) : (
-                                creators.map((item) => (
+                                filteredCreators.map((item) => (
                                     <tr key={item.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{item.name}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.phoneNumber || '-'}</td>

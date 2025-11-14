@@ -51,12 +51,12 @@ const Login: React.FC = () => {
     <div className="min-h-screen bg-primary flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-8 space-y-6">
         <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-800">TikTok Shop Admin</h1>
+            <h1 className="text-3xl font-bold text-gray-800">PT BMS</h1>
             <p className="text-gray-500 mt-2">{isLoginView ? 'Masuk ke akun Anda' : 'Buat akun baru'}</p>
         </div>
         <form onSubmit={handleAuthAction} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Surel</label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
             <input
               id="email"
               type="email"

@@ -63,3 +63,15 @@ export interface CreatorSample {
   createdAt: Timestamp;
 }
 export type NewCreatorSample = Omit<CreatorSample, 'id' | 'createdAt'>;
+
+export interface AffiliateEvent {
+  id: string;
+  eventType: 'Webinar/Zoom' | 'Seminar' | 'Kopdar' | 'Private';
+  topic: string;
+  eventDate: Timestamp;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  cancellationReason?: string;
+  createdAt: Timestamp;
+}
+
+export type NewAffiliateEvent = Omit<AffiliateEvent, 'id' | 'createdAt'>;

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 
 // Icon components defined locally for simplicity
@@ -44,12 +45,19 @@ const BoxIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
+const UsersIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.124-1.282-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.124-1.282.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+);
+
 interface SidebarProps {
-  currentView: 'dashboard' | 'data' | 'shopManagement' | 'adminManagement' | 'creatorHub' | 'creatorSamples';
-  setCurrentView: (view: 'dashboard' | 'data' | 'shopManagement' | 'adminManagement' | 'creatorHub' | 'creatorSamples') => void;
+  currentView: 'dashboard' | 'data' | 'shopManagement' | 'adminManagement' | 'creatorHub' | 'creatorSamples' | 'affiliateService';
+  setCurrentView: (view: 'dashboard' | 'data' | 'shopManagement' | 'adminManagement' | 'creatorHub' | 'creatorSamples' | 'affiliateService') => void;
+  pendingEventsCount: number;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, pendingEventsCount }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const navItems = [
@@ -59,6 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView }) => {
     { id: 'data', label: 'Data Omzet Toko', icon: DataTableIcon },
     { id: 'creatorHub', label: 'Hubungi Kreator', icon: MegaphoneIcon },
     { id: 'creatorSamples', label: 'Sampel Kreator', icon: BoxIcon },
+    { id: 'affiliateService', label: 'Affiliate Service', icon: UsersIcon },
   ];
   
   const NavLinks = () => (
@@ -69,13 +78,18 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView }) => {
           href="#"
           onClick={(e) => {
             e.preventDefault();
-            setCurrentView(item.id as 'dashboard' | 'data' | 'shopManagement' | 'adminManagement' | 'creatorHub' | 'creatorSamples');
+            setCurrentView(item.id as 'dashboard' | 'data' | 'shopManagement' | 'adminManagement' | 'creatorHub' | 'creatorSamples' | 'affiliateService');
             setIsMobileMenuOpen(false); // Close mobile menu on click
           }}
           className={`flex items-center px-4 py-3 my-2 text-gray-300 transition-colors duration-200 transform rounded-lg hover:bg-secondary hover:text-white ${currentView === item.id ? 'bg-secondary text-white' : ''}`}
         >
           <item.icon className="w-5 h-5" />
           <span className="mx-4 font-medium">{item.label}</span>
+          {item.id === 'affiliateService' && pendingEventsCount > 0 && (
+            <span className="ml-auto flex items-center justify-center bg-red-500 text-white text-xs rounded-full h-5 w-5">
+              {pendingEventsCount}
+            </span>
+          )}
         </a>
       ))}
     </nav>

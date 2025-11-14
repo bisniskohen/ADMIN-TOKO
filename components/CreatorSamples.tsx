@@ -40,6 +40,14 @@ const CreatorSamples: React.FC = () => {
     const [currentItem, setCurrentItem] = useState<CreatorSample | null>(null);
     const [formData, setFormData] = useState({ ...initialFormData });
     const [selectedCreatorIdFilter, setSelectedCreatorIdFilter] = useState<string>('all');
+    const [searchQuery, setSearchQuery] = useState('');
+    
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+
+    const [startDate, setStartDate] = useState<string>(thirtyDaysAgo.toISOString().split('T')[0]);
+    const [endDate, setEndDate] = useState<string>(today.toISOString().split('T')[0]);
 
     const creatorMap = useMemo(() => {
         return creators.reduce((acc, creator) => {
@@ -49,11 +57,25 @@ const CreatorSamples: React.FC = () => {
     }, [creators]);
 
     const filteredSamples = useMemo(() => {
-        if (selectedCreatorIdFilter === 'all') {
-            return samples;
-        }
-        return samples.filter(sample => sample.creatorId === selectedCreatorIdFilter);
-    }, [samples, selectedCreatorIdFilter]);
+        return samples.filter(sample => {
+            const creatorName = creatorMap[sample.creatorId] || '';
+            const searchMatch = searchQuery ? creatorName.toLowerCase().includes(searchQuery.toLowerCase()) : true;
+            
+            const creatorMatch = selectedCreatorIdFilter === 'all' || sample.creatorId === selectedCreatorIdFilter;
+            
+            let dateMatch = true;
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                start.setHours(0, 0, 0, 0);
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                const sampleDate = sample.dateSent.toDate();
+                dateMatch = sampleDate >= start && sampleDate <= end;
+            }
+
+            return creatorMatch && dateMatch && searchMatch;
+        });
+    }, [samples, creatorMap, selectedCreatorIdFilter, startDate, endDate, searchQuery]);
     
     const totalSamplesSent = useMemo(() => {
         return filteredSamples.reduce((total, sample) => total + (sample.quantity || 0), 0);
@@ -190,7 +212,14 @@ const CreatorSamples: React.FC = () => {
         <div className="space-y-6">
             <div className="flex flex-wrap justify-between items-center gap-4">
                 <h2 className="text-3xl font-bold text-gray-800">Sampel Kreator</h2>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                        type="text"
+                        placeholder="Cari nama kreator..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="block w-full sm:w-auto border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
+                    />
                     <select
                         value={selectedCreatorIdFilter}
                         onChange={(e) => setSelectedCreatorIdFilter(e.target.value)}
@@ -201,6 +230,19 @@ const CreatorSamples: React.FC = () => {
                             <option key={creator.id} value={creator.id}>{creator.name}</option>
                         ))}
                     </select>
+                     <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="block w-full sm:w-auto border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
+                    />
+                    <span className="text-gray-500">-</span>
+                    <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="block w-full sm:w-auto border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
+                    />
                     <button 
                       onClick={() => openModal()} 
                       disabled={creators.length === 0}
@@ -242,7 +284,7 @@ const CreatorSamples: React.FC = () => {
                             {loading ? (
                                 <tr><td colSpan={7} className="text-center py-4">Memuat data...</td></tr>
                             ) : filteredSamples.length === 0 ? (
-                                <tr><td colSpan={7} className="text-center py-4 text-gray-500">Tidak ada data sampel.</td></tr>
+                                <tr><td colSpan={7} className="text-center py-4 text-gray-500">{searchQuery ? 'Tidak ada hasil yang cocok dengan pencarian Anda.' : 'Tidak ada data sampel untuk filter yang dipilih.'}</td></tr>
                             ) : (
                                 filteredSamples.map((item) => (
                                     <tr key={item.id} className="hover:bg-gray-50">
