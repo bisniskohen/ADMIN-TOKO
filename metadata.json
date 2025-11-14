@@ -1,0 +1,5 @@
+{
+  "name": "TikTok Shop Admin",
+  "description": "An admin dashboard to manage and visualize TikTok Shop data using Firebase for storage and authentication.",
+  "requestFramePermissions": []
+}
