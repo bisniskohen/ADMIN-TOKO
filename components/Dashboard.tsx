@@ -27,6 +27,12 @@ const SalesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w
 const OrganicSalesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>;
 const AdSalesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.136a1.76 1.76 0 011.164-2.288l5.394-1.8z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 13a2 2 0 11-4 0 2 2 0 014 0z" /></svg>;
 
+const formatDateForInput = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
 
 const Dashboard: React.FC = () => {
     const [omzetData, setOmzetData] = useState<ShopData[]>([]);
@@ -94,7 +100,12 @@ const Dashboard: React.FC = () => {
         const totalOrganicSales = totalSales - totalAdSales;
 
         const dailyData = filteredData.reduce((acc: Record<string, { revenue: number, adSales: number, totalSales: number }>, sale) => {
-            const dateKey = sale.createdAt.toDate().toISOString().split('T')[0];
+            const saleDate = sale.createdAt.toDate();
+            const year = saleDate.getFullYear();
+            const month = String(saleDate.getMonth() + 1).padStart(2, '0');
+            const day = String(saleDate.getDate()).padStart(2, '0');
+            const dateKey = `${year}-${month}-${day}`;
+            
             if (!acc[dateKey]) {
                 acc[dateKey] = { revenue: 0, adSales: 0, totalSales: 0 };
             }
@@ -105,14 +116,17 @@ const Dashboard: React.FC = () => {
         }, {} as Record<string, { revenue: number, adSales: number, totalSales: number }>);
 
         const chartData = Object.keys(dailyData)
-            .map((dateKey) => ({
-                name: new Date(dateKey).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }),
-                date: new Date(dateKey),
-                Omzet: dailyData[dateKey].revenue,
-                'Total Penjualan': dailyData[dateKey].totalSales,
-                'Penjualan Iklan': dailyData[dateKey].adSales,
-                'Penjualan Organik': dailyData[dateKey].totalSales - dailyData[dateKey].adSales
-            }))
+            .map((dateKey) => {
+                const localDate = new Date(`${dateKey}T00:00:00`);
+                return {
+                    name: localDate.toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }),
+                    date: localDate,
+                    Omzet: dailyData[dateKey].revenue,
+                    'Total Penjualan': dailyData[dateKey].totalSales,
+                    'Penjualan Iklan': dailyData[dateKey].adSales,
+                    'Penjualan Organik': dailyData[dateKey].totalSales - dailyData[dateKey].adSales
+                };
+            })
             .sort((a, b) => a.date.getTime() - b.date.getTime());
 
         return { totalRevenue, totalSales, totalAdSales, totalOrganicSales, chartData };
@@ -165,15 +179,15 @@ const Dashboard: React.FC = () => {
                         <div className="flex items-center gap-2">
                              <input
                                 type="date"
-                                value={startDate.toISOString().split('T')[0]}
-                                onChange={(e) => setStartDate(new Date(e.target.value))}
+                                value={formatDateForInput(startDate)}
+                                onChange={(e) => setStartDate(new Date(e.target.value + 'T00:00:00'))}
                                 className="block w-full sm:w-auto border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
                             />
                              <span className="text-gray-500">-</span>
                             <input
                                 type="date"
-                                value={endDate.toISOString().split('T')[0]}
-                                onChange={(e) => setEndDate(new Date(e.target.value))}
+                                value={formatDateForInput(endDate)}
+                                onChange={(e) => setEndDate(new Date(e.target.value + 'T00:00:00'))}
                                 className="block w-full sm:w-auto border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
                             />
                         </div>
